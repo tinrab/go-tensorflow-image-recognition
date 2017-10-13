@@ -9,26 +9,21 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
 )
 
 type ClassifyResult struct {
-	Filename string  `json:"filename"`
-	Labels   []Label `json:"labels"`
+	Filename string        `json:"filename"`
+	Labels   []LabelResult `json:"labels"`
 }
 
-type Label struct {
-	Name        string  `json:"name"`
+type LabelResult struct {
+	Label       string  `json:"label"`
 	Probability float32 `json:"probability"`
 }
-
-type ByProbability []Label
-
-func (a ByProbability) Len() int           { return len(a) }
-func (a ByProbability) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByProbability) Less(i, j int) bool { return a[i].Probability > a[j].Probability }
 
 var (
 	graph  *tf.Graph
@@ -82,6 +77,7 @@ func classifyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 
 	// Read image
 	imageFile, header, err := r.FormFile("image")
+	imageName := strings.Split(header.Filename, ".")
 	if err != nil {
 		responseError(w, "Could not read image", http.StatusBadRequest)
 		return
@@ -91,7 +87,7 @@ func classifyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	io.Copy(&imageBuffer, imageFile)
 
 	// Make tensor
-	tensor, err := makeTensorFromImage(&imageBuffer)
+	tensor, err := makeTensorFromImage(&imageBuffer, imageName[:1][0])
 	imageBuffer.Reset()
 	if err != nil {
 		responseError(w, "Invalid image", http.StatusBadRequest)
@@ -112,20 +108,29 @@ func classifyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		return
 	}
 
-	// Find best labels
-	var resultLabels []Label
-	probabilities := output[0].Value().([][]float32)[0]
+	responseJSON(w, ClassifyResult{
+		Filename: header.Filename,
+		Labels:   findBestLabels(output[0].Value().([][]float32)[0]),
+	})
+}
+
+type ByProbability []LabelResult
+
+func (a ByProbability) Len() int           { return len(a) }
+func (a ByProbability) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByProbability) Less(i, j int) bool { return a[i].Probability > a[j].Probability }
+
+func findBestLabels(probabilities []float32) []LabelResult {
+	// Make label probability list
+	var resultLabels []LabelResult
 	for i, p := range probabilities {
 		if i >= len(labels) {
 			break
 		}
-		resultLabels = append(resultLabels, Label{Name: labels[i], Probability: p})
+		resultLabels = append(resultLabels, LabelResult{Label: labels[i], Probability: p})
 	}
-
+	// Sort by probability
 	sort.Sort(ByProbability(resultLabels))
-
-	responseJSON(w, ClassifyResult{
-		Filename: header.Filename,
-		Labels:   resultLabels[:5],
-	})
+	// Return top 5
+	return resultLabels[:5]
 }

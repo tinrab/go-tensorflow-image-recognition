@@ -7,12 +7,12 @@ import (
 	"github.com/tensorflow/tensorflow/tensorflow/go/op"
 )
 
-func makeTensorFromImage(imageBuffer *bytes.Buffer) (*tf.Tensor, error) {
+func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Tensor, error) {
 	tensor, err := tf.NewTensor(imageBuffer.String())
 	if err != nil {
 		return nil, err
 	}
-	graph, input, output, err := makeNormalizeJPEGImageGraph()
+	graph, input, output, err := makeTransformImageGraph(imageFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,8 @@ func makeTensorFromImage(imageBuffer *bytes.Buffer) (*tf.Tensor, error) {
 	return normalized[0], nil
 }
 
-func makeNormalizeJPEGImageGraph() (graph *tf.Graph, input, output tf.Output, err error) {
+// Creates a graph to decode, rezise and normalize an image
+func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output tf.Output, err error) {
 	const (
 		H, W  = 224, 224
 		Mean  = float32(117)
@@ -39,34 +40,17 @@ func makeNormalizeJPEGImageGraph() (graph *tf.Graph, input, output tf.Output, er
 	)
 	s := op.NewScope()
 	input = op.Placeholder(s, tf.String)
+	var decode tf.Output
+	if imageFormat == "png" {
+		decode = op.DecodePng(s, input, op.DecodePngChannels(3))
+	} else {
+		decode = op.DecodeJpeg(s, input, op.DecodeJpegChannels(3))
+	}
 	output = op.Div(s,
 		op.Sub(s,
 			op.ResizeBilinear(s,
 				op.ExpandDims(s,
-					op.Cast(s,
-						op.DecodeJpeg(s, input, op.DecodeJpegChannels(3)), tf.Float),
-					op.Const(s.SubScope("make_batch"), int32(0))),
-				op.Const(s.SubScope("size"), []int32{H, W})),
-			op.Const(s.SubScope("mean"), Mean)),
-		op.Const(s.SubScope("scale"), Scale))
-	graph, err = s.Finalize()
-	return graph, input, output, err
-}
-
-func makeNormalizePNGImageGraph() (graph *tf.Graph, input, output tf.Output, err error) {
-	const (
-		H, W  = 224, 224
-		Mean  = float32(117)
-		Scale = float32(1)
-	)
-	s := op.NewScope()
-	input = op.Placeholder(s, tf.String)
-	output = op.Div(s,
-		op.Sub(s,
-			op.ResizeBilinear(s,
-				op.ExpandDims(s,
-					op.Cast(s,
-						op.DecodePng(s, input, op.DecodePngChannels(3)), tf.Float),
+					op.Cast(s, decode, tf.Float),
 					op.Const(s.SubScope("make_batch"), int32(0))),
 				op.Const(s.SubScope("size"), []int32{H, W})),
 			op.Const(s.SubScope("mean"), Mean)),
