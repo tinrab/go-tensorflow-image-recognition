@@ -40,16 +40,21 @@ func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output
 	)
 	s := op.NewScope()
 	input = op.Placeholder(s, tf.String)
+	// Decode PNG or JPEG
 	var decode tf.Output
 	if imageFormat == "png" {
 		decode = op.DecodePng(s, input, op.DecodePngChannels(3))
 	} else {
 		decode = op.DecodeJpeg(s, input, op.DecodeJpegChannels(3))
 	}
+	// Div and Sub perform (value-Mean)/Scale for each pixel
 	output = op.Div(s,
 		op.Sub(s,
+			// Resize to 224x224 with bilinear interpolation
 			op.ResizeBilinear(s,
+				// Create a batch containing a single image
 				op.ExpandDims(s,
+					// Use decoded pixel values
 					op.Cast(s, decode, tf.Float),
 					op.Const(s.SubScope("make_batch"), int32(0))),
 				op.Const(s.SubScope("size"), []int32{H, W})),
