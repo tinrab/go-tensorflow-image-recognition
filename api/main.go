@@ -53,7 +53,6 @@ func loadModel() error {
 		return err
 	}
 
-	// Run inference
 	sessionModel, err = tf.NewSession(graphModel, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -98,6 +97,7 @@ func recognizeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 		return
 	}
 
+	// Run inference
 	output, err := sessionModel.Run(
 		map[tf.Output]*tf.Tensor{
 			graphModel.Operation("input").Output(0): tensor,
