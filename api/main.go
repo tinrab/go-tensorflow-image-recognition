@@ -26,8 +26,9 @@ type LabelResult struct {
 }
 
 var (
-	graph  *tf.Graph
-	labels []string
+	graphModel   *tf.Graph
+	sessionModel *tf.Session
+	labels       []string
 )
 
 func main() {
@@ -47,10 +48,16 @@ func loadModel() error {
 	if err != nil {
 		return err
 	}
-	graph = tf.NewGraph()
-	if err := graph.Import(model, ""); err != nil {
+	graphModel = tf.NewGraph()
+	if err := graphModel.Import(model, ""); err != nil {
 		return err
 	}
+
+	sessionModel, err = tf.NewSession(graphModel, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Load labels
 	labelsFile, err := os.Open("/model/imagenet_comp_graph_label_strings.txt")
 	if err != nil {
@@ -91,17 +98,12 @@ func recognizeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 	}
 
 	// Run inference
-	session, err := tf.NewSession(graph, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer session.Close()
-	output, err := session.Run(
+	output, err := sessionModel.Run(
 		map[tf.Output]*tf.Tensor{
-			graph.Operation("input").Output(0): tensor,
+			graphModel.Operation("input").Output(0): tensor,
 		},
 		[]tf.Output{
-			graph.Operation("output").Output(0),
+			graphModel.Operation("output").Output(0),
 		},
 		nil)
 	if err != nil {
