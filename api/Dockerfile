@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow
+FROM tensorflow/tensorflow:1.9.0
 
 # Install TensorFlow C library
 RUN curl -L \
@@ -16,21 +16,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		make \
 		pkg-config \
     wget \
+    curl \
     git \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV GOLANG_VERSION 1.9.1
+ENV GOLANG_VERSION 1.10.3
+
 RUN set -eux; \
 	\
+# this "case" statement is generated via "update.sh"
 	dpkgArch="$(dpkg --print-architecture)"; \
 	case "${dpkgArch##*-}" in \
-		amd64) goRelArch='linux-amd64'; goRelSha256='07d81c6b6b4c2dcf1b5ef7c27aaebd3691cdb40548500941f92b221147c5d9c7' ;; \
-		armhf) goRelArch='linux-armv6l'; goRelSha256='65a0495a50c7c240a6487b1170939586332f6c8f3526abdbb9140935b3cff14c' ;; \
-		arm64) goRelArch='linux-arm64'; goRelSha256='d31ecae36efea5197af271ccce86ccc2baf10d2e04f20d0fb75556ecf0614dad' ;; \
-		i386) goRelArch='linux-386'; goRelSha256='2cea1ce9325cb40839601b566bc02b11c92b2942c21110b1b254c7e72e5581e7' ;; \
-		ppc64el) goRelArch='linux-ppc64le'; goRelSha256='de57b6439ce9d4dd8b528599317a35fa1e09d6aa93b0a80e3945018658d963b8' ;; \
-		s390x) goRelArch='linux-s390x'; goRelSha256='9adf03574549db82a72e0d721ef2178ec5e51d1ce4f309b271a2bca4dcf206f6' ;; \
-		*) goRelArch='src'; goRelSha256='a84afc9dc7d64fe0fa84d4d735e2ece23831a22117b50dafc75c1484f1cb550e'; \
+		amd64) goRelArch='linux-amd64'; goRelSha256='fa1b0e45d3b647c252f51f5e1204aba049cde4af177ef9f2181f43004f901035' ;; \
+		armhf) goRelArch='linux-armv6l'; goRelSha256='d3df3fa3d153e81041af24f31a82f86a21cb7b92c1b5552fb621bad0320f06b6' ;; \
+		arm64) goRelArch='linux-arm64'; goRelSha256='355128a05b456c9e68792143801ad18e0431510a53857f640f7b30ba92624ed2' ;; \
+		i386) goRelArch='linux-386'; goRelSha256='3d5fe1932c904a01acb13dae07a5835bffafef38bef9e5a05450c52948ebdeb4' ;; \
+		ppc64el) goRelArch='linux-ppc64le'; goRelSha256='f3640b2f0990a9617c937775f669ee18f10a82e424e5f87a8ce794a6407b8347' ;; \
+		s390x) goRelArch='linux-s390x'; goRelSha256='34385f64651f82fbc11dc43bdc410c2abda237bdef87f3a430d35a508ec3ce0d' ;; \
+		*) goRelArch='src'; goRelSha256='567b1cc66c9704d1c019c50bef946272e911ec6baf244310f87f4e678be155f2'; \
 			echo >&2; echo >&2 "warning: current architecture ($dpkgArch) does not have a corresponding Go binary release; will be building from source"; echo >&2 ;; \
 	esac; \
 	\
@@ -49,7 +52,7 @@ RUN set -eux; \
 	fi; \
 	\
 	export PATH="/usr/local/go/bin:$PATH"; \
-	go version
+  go version
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
@@ -57,9 +60,7 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 # Install dependencies
-RUN go get github.com/tensorflow/tensorflow/tensorflow/go \
-  github.com/tensorflow/tensorflow/tensorflow/go/op \
-  github.com/julienschmidt/httprouter
+RUN go get -u golang.org/x/vgo
 
 # Download InceptionV3 model
 RUN mkdir -p /model && \
@@ -67,16 +68,12 @@ RUN mkdir -p /model && \
   unzip /model/inception.zip -d /model && \
   chmod -R 777 /model
 
-# Create user
-RUN adduser --disabled-password --gecos '' api
-USER api
-
 # Set up project directory
-WORKDIR "/go/src/app"
+WORKDIR "/go/src/github.com/tinrab/go-tensorflow-image-recognition"
 COPY . .
 
 # Install the app
-RUN go install -v ./...
+RUN vgo build -o /usr/bin/app .
 
 # Run the app
 CMD [ "app" ]
