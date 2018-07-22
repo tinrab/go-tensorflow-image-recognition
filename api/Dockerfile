@@ -59,9 +59,6 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
-# Install dependencies
-RUN go get -u golang.org/x/vgo
-
 # Download InceptionV3 model
 RUN mkdir -p /model && \
   wget "https://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip" -O /model/inception.zip && \
@@ -73,7 +70,7 @@ WORKDIR "/go/src/github.com/tinrab/go-tensorflow-image-recognition"
 COPY . .
 
 # Install the app
-RUN vgo build -o /usr/bin/app .
+RUN go get ./... && go build -o /usr/bin/app .
 
 # Run the app
 CMD [ "app" ]

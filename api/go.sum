@@ -1,7 +1,0 @@
-github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9 h1:TrJiKy0TujUDAEeXQCwLjfoU0JtkOG3yImw3jAWJxo0=
-github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
-github.com/tensorflow/tensorflow v1.9.0 h1:uHWqs/zLmfEHBCAKHbghChQEzBrn26icb3RwlrG12rQ=
-github.com/tensorflow/tensorflow v1.9.0/go.mod h1:itOSERT4trABok4UOoG+X4BoKds9F3rIsySdn+Lvu90=
-github.com/tensorflow/tensorflow/tensorflow v0.0.0-20180711184339-308612f702d6/go.mod h1:G7mAYYxgmS0lVkHyy2hEOLQCFB0DlQFTMLWggykrydY=
-github.com/tensorflow/tensorflow/tensorflow/go v0.0.0-20180711184339-308612f702d6/go.mod h1:G7mAYYxgmS0lVkHyy2hEOLQCFB0DlQFTMLWggykrydY=
-github.com/tensorflow/tensorflow/tensorflow/go/op v0.0.0-20180711184339-308612f702d6/go.mod h1:G7mAYYxgmS0lVkHyy2hEOLQCFB0DlQFTMLWggykrydY=
