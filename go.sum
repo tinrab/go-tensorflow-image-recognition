@@ -1,0 +1,4 @@
+github.com/julienschmidt/httprouter v1.2.0 h1:TDTW5Yz1mjftljbcKqRcrYhd4XeOoI98t+9HbQbYf7g=
+github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
+github.com/tensorflow/tensorflow v1.12.0 h1:fT4okrN4BkpgotWmDwS56wM6BdkRpTL0lLMzvkM+bLo=
+github.com/tensorflow/tensorflow v1.12.0/go.mod h1:itOSERT4trABok4UOoG+X4BoKds9F3rIsySdn+Lvu90=

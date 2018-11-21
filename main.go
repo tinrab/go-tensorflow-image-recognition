@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -38,7 +39,10 @@ func main() {
 	}
 
 	r := httprouter.New()
+
 	r.POST("/recognize", recognizeHandler)
+
+	fmt.Println("Listening on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
