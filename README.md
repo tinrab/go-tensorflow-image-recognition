@@ -14,7 +14,7 @@ Build the image.
 $ docker build -t localhost/recognition .
 ```
 
-Run servicve in a container.
+Run service in a container.
 
 ```
 $ docker run -p 8080:8080 --rm localhost/recognition
